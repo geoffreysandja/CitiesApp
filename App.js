@@ -7,10 +7,12 @@
  */
 
 import React, {Component} from 'react';
-import {Platform, StyleSheet, Text, View} from 'react-native';
+import {Platform, StyleSheet, Text, View,AsyncStorage} from 'react-native';
 import Tabs from './src';
 
+
 type Props = {};
+const key= 'state';
 export default class App extends Component<Props> {
   state={
     cities:[]
@@ -18,7 +20,10 @@ export default class App extends Component<Props> {
   addCity= (city)=>{
     const cities=this.state.cities
     cities.push(city);
-    this.setState({cities})
+    this.setState({cities});
+    AsyncStorage.setItem(key,JSON.stringify(cities))
+    .then(()=> console.log('storage updated!'))
+    .catch(()=> console.log('e:',e));
   }
   addLocation=(location,city)=>{
     const index=this.state.cities.findIndex(item=>{
@@ -31,7 +36,22 @@ export default class App extends Component<Props> {
       chosenCity,
       ...this.state.cities.slice(index+1)
     ]
-    this.setState({cities});
+    this.setState({cities},()=>{
+      AsyncStorage.setItem(key,JSON.stringify(cities))
+      .then(()=> console.log('storage updated!'))
+      .catch(e=> console.log('e:',e));
+    });
+  }
+  async componentDidMount(){
+    try{
+      let cities=await AsyncStorage.getItem(key);
+      if(cities!=null){
+        cities=JSON.parse(cities);
+        this.setState({cities});
+      }
+    }catch(e){
+      console.log('error from AsyncStorage',e);
+    }
   }
   render() {
     return (
